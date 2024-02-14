@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <FrameLayout
+        android:id="@+id/frameView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="5dp"
+        android:padding="1dp"
+        android:background="@drawable/drawing_view_background"
+        app:layout_constraintBottom_toTopOf="@+id/ll_Buttons"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/backgrounImg"
+            android:scaleType="centerCrop"
+            tools:src="@drawable/background"/>
+
+
+        <com.example.colorpaintapp.DrawingView
+            android:id="@+id/drawing_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#80FFFFFF" />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_Buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent">
+
+
+        <ImageButton
+            android:id="@+id/selectBrush"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:scaleType="fitXY"
+            android:padding="5dp"
+            android:layout_margin="5dp"
+            android:background="@drawable/button_background"
+            android:src="@drawable/brush_icon"/>
+
+        <ImageButton
+            android:id="@+id/selectColor"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:scaleType="fitXY"
+            android:padding="5dp"
+            android:layout_margin="5dp"
+            android:background="@drawable/button_background"
+            android:src="@drawable/color_pan"/>
+
+        <ImageButton
+            android:id="@+id/selectImg"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:scaleType="fitXY"
+            android:padding="5dp"
+            android:layout_margin="5dp"
+            android:background="@drawable/button_background"
+            android:src="@drawable/img_icon"/>
+
+        <ImageButton
+            android:id="@+id/undo"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:scaleType="fitXY"
+            android:padding="5dp"
+            android:layout_margin="5dp"
+            android:background="@drawable/button_background"
+            android:src="@drawable/ic_undo"/>
+
+        <ImageButton
+            android:id="@+id/saveImg"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:scaleType="fitXY"
+            android:padding="5dp"
+            android:layout_margin="5dp"
+            android:background="@drawable/button_background"
+            android:src="@drawable/ic_save"/>
+
+        <ImageButton
+            android:id="@+id/share"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:scaleType="fitXY"
+            android:padding="5dp"
+            android:layout_margin="5dp"
+            android:background="@drawable/button_background"
+            android:src="@drawable/icon_share"/>
+    </LinearLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
