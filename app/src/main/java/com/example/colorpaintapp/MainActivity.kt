@@ -6,45 +6,50 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
-import android.media.MediaScannerConnection
-import android.net.Uri
+import android.graphics.drawable.ColorDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import android.widget.FrameLayout
+import android.widget.GridView
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.core.content.getSystemService
-import androidx.core.net.toUri
 import androidx.core.view.get
 import androidx.lifecycle.lifecycleScope
+import com.example.colorpaintapp.Adapter.ColorBoxAdapter
+import com.example.colorpaintapp.Util.PreferenceUtil
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import ir.kotlin.kavehcolorpicker.KavehColorAlphaSlider
+import ir.kotlin.kavehcolorpicker.KavehColorPicker
+import ir.kotlin.kavehcolorpicker.KavehHueSlider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.io.OutputStream
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,25 +58,28 @@ class MainActivity : AppCompatActivity() {
     private var selectColor : ImageButton? = null
     private var selectImage : ImageButton? = null
     private var currentColorPaint : ImageButton? = null
-    private var undoDraw : ImageButton? = null
+    private var undoDraw : ImageView? = null
     private var saveFile : ImageButton? = null
     private var share : ImageButton? = null
+    private var redoBtn : ImageView? = null
     private var currentSaveFile : String = ""
+    private var currentColor : String = ""
+    private var colorPickerDialog : Dialog? = null
     var openGallaryLauncher : ActivityResultLauncher<Intent> = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
         result ->
         if(result.resultCode == RESULT_OK && result.data!= null){
-            var imageBackground : ImageView = findViewById(R.id.backgrounImg)
+            val imageBackground : ImageView = findViewById(R.id.backgrounImg)
             imageBackground.setImageURI(result.data?.data)
         }
     }
     val requestPermission : ActivityResultLauncher<Array<String>>? = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
         permissions ->
         permissions.entries.forEach {
-            var permissionName = it.key
-            var isGranted = it.value
+            val permissionName = it.key
+            val isGranted = it.value
             if(isGranted){
                 Toast.makeText(this,"Permission Granted", Toast.LENGTH_SHORT).show()
-                var intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                 openGallaryLauncher.launch(intent)
             }else{
                 if(permissionName == Manifest.permission.READ_EXTERNAL_STORAGE){
@@ -92,12 +100,25 @@ class MainActivity : AppCompatActivity() {
         undoDraw = findViewById(R.id.undo)
         saveFile = findViewById(R.id.saveImg)
         share = findViewById(R.id.share)
+        redoBtn = findViewById(R.id.forward)
+        val backBtn = findViewById<ImageView>(R.id.backBtn)
         drawingView?.setSizeForBrush(10f)
+
+        val intent : Intent = getIntent()
+        if(intent.hasExtra("imagePath")) {
+            val value = intent.getStringExtra("imagePath")
+            val bitmap: Bitmap = BitmapFactory.decodeFile(value)
+
+            val imageBackground: ImageView = findViewById(R.id.backgrounImg)
+            imageBackground.setImageBitmap(bitmap)
+        }
+
         selectBrush?.setOnClickListener {
             showBrushDialog()
         }
         selectColor?.setOnClickListener {
-            showColorsDialog()
+            //startActivity(Intent(this@MainActivity, ColorPicker::class.java))
+            colorPickerDialog()
         }
         selectImage?.setOnClickListener {
             requestStoragePermission()
@@ -105,6 +126,9 @@ class MainActivity : AppCompatActivity() {
 
         undoDraw?.setOnClickListener {
             drawingView?.onClickUndo()
+        }
+        redoBtn?.setOnClickListener {
+            drawingView?.onClickRedo()
         }
         share?.setOnClickListener {
             if(!currentSaveFile.equals("")){
@@ -117,11 +141,29 @@ class MainActivity : AppCompatActivity() {
         saveFile?.setOnClickListener {
             if(isReadStoragePermissionAllow()){
                 lifecycleScope.launch {
-                    var frameLayoutView : FrameLayout = findViewById(R.id.frameView)
-                    var myBitmbap : Bitmap = getBitmapFromView(frameLayoutView)
+                    val frameLayoutView : FrameLayout = findViewById(R.id.frameView)
+                    val myBitmbap : Bitmap = getBitmapFromView(frameLayoutView)
                     currentSaveFile = saveBitmapFile(myBitmbap)
                 }
             }
+        }
+
+        backBtn.setOnClickListener(View.OnClickListener {
+            //startActivity(Intent(this@MainActivity, HomePageActivity::class.java))
+            finish()
+        })
+
+        val myColorList : String? = PreferenceUtil.getInstance(this@MainActivity).getString("colorList")
+        if(myColorList.equals("")){
+            var arrayList : List<Int> = ArrayList<Int>()
+            arrayList = arrayList + Color.BLACK
+            arrayList = arrayList + Color.WHITE
+            arrayList = arrayList + Color.GREEN
+            arrayList = arrayList + Color.RED
+
+            val myString : String = Gson().toJson(arrayList)
+
+            PreferenceUtil.getInstance(this@MainActivity).setString("colorList", myString)
         }
     }
 
@@ -141,23 +183,56 @@ class MainActivity : AppCompatActivity() {
 
     private fun showBrushDialog(){
         val dialog = Dialog(this)
-        dialog.setContentView(R.layout.dialog_brush_size)
+        dialog.window?.requestFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.brush_sample)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
+        dialog.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        dialog.window?.setGravity(Gravity.BOTTOM)
         dialog.setTitle("Brush Size")
-        var smallBtn : ImageButton = dialog.findViewById(R.id.small)
-        var mediumBtn : ImageButton = dialog.findViewById(R.id.medium)
-        var largeBtn : ImageButton = dialog.findViewById(R.id.large)
-        smallBtn.setOnClickListener {
-            drawingView?.setSizeForBrush(5f)
+        val pencil : ImageView = dialog.findViewById(R.id.pencil)
+        val pen : ImageView = dialog.findViewById(R.id.pen)
+        val dash : ImageView = dialog.findViewById(R.id.dash)
+        val circle : ImageView = dialog.findViewById(R.id.circle)
+        val rectngale : ImageView = dialog.findViewById(R.id.rectangle)
+        val seekBar : SeekBar = dialog.findViewById(R.id.seekBar)
+        val progressCount : TextView = dialog.findViewById(R.id.progressCountTxt)
+        pencil.setOnClickListener {
+            drawingView!!.selectedBrushEffect(false, false, false, false)
             dialog.dismiss()
         }
-        mediumBtn.setOnClickListener {
-            drawingView?.setSizeForBrush(10f)
+        pen.setOnClickListener {
+            drawingView!!.selectedBrushEffect(false, true, false, false)
             dialog.dismiss()
         }
-        largeBtn.setOnClickListener {
-            drawingView?.setSizeForBrush(15f)
+        dash.setOnClickListener {
+            drawingView!!.selectedBrushEffect(true, false, false, false)
             dialog.dismiss()
         }
+        circle.setOnClickListener {
+            drawingView!!.selectedBrushEffect(false, false, true, false)
+            dialog.dismiss()
+        }
+        rectngale.setOnClickListener {
+            drawingView!!.selectedBrushEffect(false, false, false, true)
+            dialog.dismiss()
+        }
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                progressCount.setText(p1.toString())
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(p0: SeekBar?) {
+                drawingView?.setSizeForBrush(p0!!.progress.toFloat())
+            }
+
+        })
         dialog.show()
     }
 
@@ -178,7 +253,7 @@ class MainActivity : AppCompatActivity() {
         if(view !== currentColorPaint){
             val imageButton = view as ImageButton
             val colorTag = imageButton.tag.toString()
-            drawingView?.setColor(colorTag)
+            //drawingView?.setColor(colorTag)
             imageButton.setImageDrawable(
                 ContextCompat.getDrawable(this, R.drawable.pallet_select)
             )
@@ -221,12 +296,12 @@ class MainActivity : AppCompatActivity() {
             try {
                 if (mBitmap != null){
 
-                    var cw = ContextWrapper(applicationContext)
-                    var directory : File =cw.getDir("profile", Context.MODE_PRIVATE)
+                    val cw = ContextWrapper(applicationContext)
+                    val directory : File =cw.getDir("profile", Context.MODE_PRIVATE)
                     if(!directory.exists()){
                         directory.mkdir()
                     }
-                    var file = File(directory,"${System.currentTimeMillis()}.png")
+                    val file = File(directory,"${System.currentTimeMillis()}.png")
                     var fOut : FileOutputStream? = null
                     fOut = FileOutputStream(file)
 
@@ -264,6 +339,76 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent.createChooser(shareIntent, "share"))
         }catch (ex : Exception){
             Log.e("shareIntent", "share: "+ ex.message )
+        }
+    }
+
+    fun colorPickerDialog() {
+        if (colorPickerDialog != null) {
+            colorPickerDialog!!.show()
+        } else {
+            colorPickerDialog = Dialog(this@MainActivity)
+            colorPickerDialog!!.window?.requestFeature(Window.FEATURE_NO_TITLE)
+            colorPickerDialog!!.setContentView(R.layout.activity_color_picker)
+            colorPickerDialog!!.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            colorPickerDialog!!.window?.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+
+            val colorPicker = colorPickerDialog!!.findViewById<KavehColorPicker>(R.id.colorPickerView)
+            val hueSlider = colorPickerDialog!!.findViewById<KavehHueSlider>(R.id.hueSlider)
+            val colorAlphaSlider =
+                colorPickerDialog!!.findViewById<KavehColorAlphaSlider>(R.id.colorAlphaSlider)
+            val txtColor = colorPickerDialog!!.findViewById<TextView>(R.id.txtColor)
+            val bgColor = colorPickerDialog!!.findViewById<CardView>(R.id.bgColor)
+            val closeBtn = colorPickerDialog!!.findViewById<TextView>(R.id.closeBtn)
+            val colorBoxGrid = colorPickerDialog!!.findViewById<GridView>(R.id.colorBoxGrid)
+            val addColorBtn = colorPickerDialog!!.findViewById<ImageView>(R.id.addColorBtn)
+
+            colorPicker.alphaSliderView = colorAlphaSlider
+            colorPicker.hueSliderView = hueSlider
+
+            try {
+                val myColorListString: String? =
+                    PreferenceUtil.getInstance(this@MainActivity).getString("colorList")
+
+                val typeToken = object : TypeToken<List<Int>>() {}.type
+
+                val arrayList = Gson().fromJson<List<Int>>(myColorListString, typeToken)
+
+                val colorAdapter = ColorBoxAdapter(arrayList, this@MainActivity)
+                colorBoxGrid.adapter = colorAdapter
+
+                colorPicker.setOnColorChangedListener { color ->
+                    val hex = Integer.toHexString(color)
+                    txtColor.text = "#" + hex
+                    currentColor = "#" + hex
+                    bgColor.setCardBackgroundColor(color)
+                    Log.e("ColorPicker", "onCreate: " + hex)
+                }
+
+                addColorBtn.setOnClickListener {
+                    val colorToAdd = colorPicker.color
+                    colorAdapter.addAll(colorToAdd)
+                }
+
+                closeBtn.setOnClickListener {
+                    val selectColor =
+                        PreferenceUtil.getInstance(this@MainActivity).getString("latestColor")
+                    if (selectColor != null && selectColor != "") {
+                        drawingView?.setColor(selectColor)
+                        PreferenceUtil.getInstance(this@MainActivity).setString("latestColor", "")
+                        colorPickerDialog!!.dismiss()
+                    } else {
+                        drawingView?.setColor(currentColor)
+                        colorPickerDialog!!.dismiss()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "colorPickerDialog: " + e.message)
+            }
+
+            colorPickerDialog!!.show()
         }
     }
 }

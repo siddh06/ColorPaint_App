@@ -6,32 +6,65 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <FrameLayout
-        android:id="@+id/frameView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="5dp"
-        android:padding="1dp"
-        android:background="@drawable/drawing_view_background"
-        app:layout_constraintBottom_toTopOf="@+id/ll_Buttons"
+    <RelativeLayout
+        android:id="@+id/relativeLayout3"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center_vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
+            android:id="@+id/backBtn"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginLeft="10dp"
+            android:src="@drawable/ic_back"/>
+
+        <ImageView
+            android:id="@+id/undo"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_alignLeft="@+id/forward"
+            android:layout_marginLeft="-52dp"
+            android:layout_marginRight="20dp"
+            android:src="@drawable/ic_undo_arrow" />
+
+        <ImageView
+            android:id="@+id/forward"
+            android:layout_width="24dp"
+            android:layout_height="25dp"
+            android:layout_marginLeft="10dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="20dp"
+            android:src="@drawable/forward"/>
+
+    </RelativeLayout>
+
+    <FrameLayout
+        android:id="@+id/frameView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/drawing_view_background"
+        app:layout_constraintBottom_toTopOf="@+id/ll_Buttons"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/relativeLayout3">
+
+        <ImageView
+            android:id="@+id/backgrounImg"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/backgrounImg"
-            android:scaleType="centerCrop"
-            tools:src="@drawable/background"/>
+            android:scaleType="centerCrop"/>
 
 
         <com.example.colorpaintapp.DrawingView
             android:id="@+id/drawing_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#80FFFFFF" />
+            android:layout_height="match_parent"/>
 
     </FrameLayout>
 
@@ -39,73 +72,155 @@
         android:id="@+id/ll_Buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/black"
+        android:gravity="center"
         android:orientation="horizontal"
-        android:gravity="center_horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent">
 
 
-        <ImageButton
-            android:id="@+id/selectBrush"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:scaleType="fitXY"
-            android:padding="5dp"
-            android:layout_margin="5dp"
-            android:background="@drawable/button_background"
-            android:src="@drawable/brush_icon"/>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:orientation="vertical">
 
-        <ImageButton
-            android:id="@+id/selectColor"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:scaleType="fitXY"
-            android:padding="5dp"
-            android:layout_margin="5dp"
-            android:background="@drawable/button_background"
-            android:src="@drawable/color_pan"/>
+            <ImageButton
+                android:id="@+id/selectBrush"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@color/black"
+                android:padding="5dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/brush_icon" />
 
-        <ImageButton
-            android:id="@+id/selectImg"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:scaleType="fitXY"
-            android:padding="5dp"
-            android:layout_margin="5dp"
-            android:background="@drawable/button_background"
-            android:src="@drawable/img_icon"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Brush"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
 
-        <ImageButton
-            android:id="@+id/undo"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:scaleType="fitXY"
-            android:padding="5dp"
-            android:layout_margin="5dp"
-            android:background="@drawable/button_background"
-            android:src="@drawable/ic_undo"/>
+        </LinearLayout>
 
-        <ImageButton
-            android:id="@+id/saveImg"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:scaleType="fitXY"
-            android:padding="5dp"
-            android:layout_margin="5dp"
-            android:background="@drawable/button_background"
-            android:src="@drawable/ic_save"/>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/selectColor"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@color/black"
+                android:padding="5dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/color_pan" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Color"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/selectImg"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@color/black"
+                android:padding="5dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/img_icon" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Gallery"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <ImageButton
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@color/black"
+                android:padding="5dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_undo" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Undo"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/saveImg"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@color/black"
+                android:padding="5dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_save"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Save"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
+
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/share"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:scaleType="fitXY"
-            android:padding="5dp"
             android:layout_margin="5dp"
             android:background="@drawable/button_background"
-            android:src="@drawable/icon_share"/>
+            android:padding="5dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/icon_share"
+            android:visibility="gone" />
     </LinearLayout>
 
 
