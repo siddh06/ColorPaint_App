@@ -12,9 +12,9 @@ class SplashScreen : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash_screen)
 
-        val imgGif : ImageView = findViewById(R.id.imgGif)
+        /*val imgGif : ImageView = findViewById(R.id.imgGif)
 
-        Glide.with(this).load(R.drawable.color_blast).into(imgGif)
+        Glide.with(this).load(R.drawable.color_blast).into(imgGif)*/
 
         val handler = Handler()
         handler.postDelayed(object : Runnable{
@@ -23,6 +23,6 @@ class SplashScreen : AppCompatActivity() {
                 finish()
             }
 
-        }, 3000)
+        }, 1000)
     }
 }

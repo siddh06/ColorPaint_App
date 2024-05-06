@@ -23,7 +23,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/drawingView" >
+        app:layout_constraintTop_toBottomOf="@+id/drawingView">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -65,6 +66,7 @@
         app:layout_constraintTop_toBottomOf="@+id/seekBar" />
 
     <LinearLayout
+        android:id="@+id/linearLayout2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -77,45 +79,155 @@
             android:id="@+id/pencil"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:padding="2dp"
             android:layout_margin="8dp"
-            android:src="@drawable/pencil"/>
+            android:padding="2dp"
+            android:src="@drawable/pencil" />
 
         <ImageView
             android:id="@+id/pen"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:padding="2dp"
             android:layout_margin="8dp"
             android:layout_marginTop="5dp"
-            android:src="@drawable/pen"/>
+            android:padding="2dp"
+            android:src="@drawable/pen" />
 
         <ImageView
             android:id="@+id/dash"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:padding="2dp"
             android:layout_margin="8dp"
-            android:src="@drawable/dash"
-            android:layout_marginTop="5dp"/>
+            android:layout_marginTop="5dp"
+            android:padding="2dp"
+            android:src="@drawable/dash" />
 
         <ImageView
             android:id="@+id/circle"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:padding="2dp"
             android:layout_margin="8dp"
-            android:src="@drawable/ic_circle"
-            android:layout_marginTop="5dp"/>
+            android:layout_marginTop="5dp"
+            android:padding="2dp"
+            android:src="@drawable/ic_circle" />
 
         <ImageView
             android:id="@+id/rectangle"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:padding="2dp"
             android:layout_margin="8dp"
-            android:src="@drawable/ic_rectangle"
-            android:layout_marginTop="5dp"/>
+            android:layout_marginTop="5dp"
+            android:padding="2dp"
+            android:src="@drawable/ic_rectangle" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
+
+        <ImageView
+            android:id="@+id/airBrush"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:padding="2dp"
+            android:src="@drawable/pencil" />
+
+        <ImageView
+            android:id="@+id/neonInner"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:layout_marginTop="5dp"
+            android:padding="2dp"
+            android:src="@drawable/pen" />
+
+        <ImageView
+            android:id="@+id/neonOuter"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:padding="2dp"
+            android:src="@drawable/pencil" />
+
+        <ImageView
+            android:id="@+id/neonSolid"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:layout_marginTop="5dp"
+            android:padding="2dp"
+            android:src="@drawable/pen" />
+
+        <ImageView
+            android:id="@+id/line"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:layout_marginTop="5dp"
+            android:padding="2dp"
+            android:src="@drawable/pen" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout3">
+
+        <ImageView
+            android:id="@+id/roundRectangle"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:padding="2dp"
+            android:src="@drawable/pencil" />
+
+        <ImageView
+            android:id="@+id/ovalBrush"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:layout_marginTop="5dp"
+            android:padding="2dp"
+            android:src="@drawable/pen" />
+
+        <ImageView
+            android:id="@+id/textDraw"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:padding="2dp"
+            android:src="@drawable/pencil" />
+
+        <ImageView
+            android:id="@+id/fillCircle"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:layout_marginTop="5dp"
+            android:padding="2dp"
+            android:src="@drawable/pen" />
+
+        <ImageView
+            android:id="@+id/fillRectangle"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:layout_marginTop="5dp"
+            android:padding="2dp"
+            android:src="@drawable/pen" />
 
     </LinearLayout>
 

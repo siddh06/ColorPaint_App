@@ -65,6 +65,15 @@ class MainActivity : AppCompatActivity() {
     private var currentSaveFile : String = ""
     private var currentColor : String = ""
     private var colorPickerDialog : Dialog? = null
+    private var brushDialog : Dialog? = null
+
+    companion object{
+        var neonInnerCheck = false
+        var neonOuterCheck = false
+        var neonSolidCheck = false
+        var neonNormalCheck = false
+    }
+
     var openGallaryLauncher : ActivityResultLauncher<Intent> = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
         result ->
         if(result.resultCode == RESULT_OK && result.data!= null){
@@ -102,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         share = findViewById(R.id.share)
         redoBtn = findViewById(R.id.forward)
         val backBtn = findViewById<ImageView>(R.id.backBtn)
-        drawingView?.setSizeForBrush(10f)
+        drawingView?.setSizeForBrush(0.8f)
 
         val intent : Intent = getIntent()
         if(intent.hasExtra("imagePath")) {
@@ -182,58 +191,133 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showBrushDialog(){
-        val dialog = Dialog(this)
-        dialog.window?.requestFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.brush_sample)
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
-        dialog.window?.setLayout(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        dialog.window?.setGravity(Gravity.BOTTOM)
-        dialog.setTitle("Brush Size")
-        val pencil : ImageView = dialog.findViewById(R.id.pencil)
-        val pen : ImageView = dialog.findViewById(R.id.pen)
-        val dash : ImageView = dialog.findViewById(R.id.dash)
-        val circle : ImageView = dialog.findViewById(R.id.circle)
-        val rectngale : ImageView = dialog.findViewById(R.id.rectangle)
-        val seekBar : SeekBar = dialog.findViewById(R.id.seekBar)
-        val progressCount : TextView = dialog.findViewById(R.id.progressCountTxt)
-        pencil.setOnClickListener {
-            drawingView!!.selectedBrushEffect(false, false, false, false)
-            dialog.dismiss()
-        }
-        pen.setOnClickListener {
-            drawingView!!.selectedBrushEffect(false, true, false, false)
-            dialog.dismiss()
-        }
-        dash.setOnClickListener {
-            drawingView!!.selectedBrushEffect(true, false, false, false)
-            dialog.dismiss()
-        }
-        circle.setOnClickListener {
-            drawingView!!.selectedBrushEffect(false, false, true, false)
-            dialog.dismiss()
-        }
-        rectngale.setOnClickListener {
-            drawingView!!.selectedBrushEffect(false, false, false, true)
-            dialog.dismiss()
-        }
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                progressCount.setText(p1.toString())
+        if(brushDialog != null){
+            brushDialog!!.show()
+        }else{
+            brushDialog = Dialog(this)
+            brushDialog!!.window?.requestFeature(Window.FEATURE_NO_TITLE)
+            brushDialog!!.setContentView(R.layout.brush_sample)
+            brushDialog!!.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
+            brushDialog!!.window?.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            brushDialog!!.window?.setGravity(Gravity.BOTTOM)
+            brushDialog!!.setTitle("Brush Size")
+            val pencil : ImageView = brushDialog!!.findViewById(R.id.pencil)
+            val pen : ImageView = brushDialog!!.findViewById(R.id.pen)
+            val dash : ImageView = brushDialog!!.findViewById(R.id.dash)
+            val circle : ImageView = brushDialog!!.findViewById(R.id.circle)
+            val rectngale : ImageView = brushDialog!!.findViewById(R.id.rectangle)
+
+            val neonInner : ImageView = brushDialog!!.findViewById(R.id.neonInner)
+            val neonOuter : ImageView = brushDialog!!.findViewById(R.id.neonOuter)
+            val neonSolid : ImageView = brushDialog!!.findViewById(R.id.neonSolid)
+            val airBrush : ImageView = brushDialog!!.findViewById(R.id.airBrush)
+            val line : ImageView = brushDialog!!.findViewById(R.id.line)
+            val roundRect : ImageView = brushDialog!!.findViewById(R.id.roundRectangle)
+            val oval : ImageView = brushDialog!!.findViewById(R.id.ovalBrush)
+            val textDraw : ImageView = brushDialog!!.findViewById(R.id.textDraw)
+            val fillCircle : ImageView = brushDialog!!.findViewById(R.id.fillCircle)
+            val fillRect : ImageView = brushDialog!!.findViewById(R.id.fillRectangle)
+
+            val seekBar : SeekBar = brushDialog!!.findViewById(R.id.seekBar)
+            val progressCount : TextView = brushDialog!!.findViewById(R.id.progressCountTxt)
+            pencil.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, false, false, false, false, false,false,false,false, false)
+                brushDialog!!.dismiss()
+            }
+            pen.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, true, false, false, false, false,false,false,false,false)
+                neonNormalCheck = true
+                neonInnerCheck = false
+                neonOuterCheck = false
+                neonSolidCheck = false
+                brushDialog!!.dismiss()
             }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {
-
+            neonInner.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, true, false, false, false, false,false,false,false,false)
+                neonNormalCheck = false
+                neonInnerCheck = true
+                neonOuterCheck = false
+                neonSolidCheck = false
+                brushDialog!!.dismiss()
+            }
+            neonOuter.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, true, false, false, false, false,false,false,false,false)
+                neonNormalCheck = false
+                neonInnerCheck = false
+                neonOuterCheck = true
+                neonSolidCheck = false
+                brushDialog!!.dismiss()
+            }
+            neonSolid.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, true, false, false, false, false,false,false,false,false)
+                neonNormalCheck = false
+                neonInnerCheck = false
+                neonOuterCheck = false
+                neonSolidCheck = true
+                brushDialog!!.dismiss()
+            }
+            airBrush.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, false, false, false, true, false,false,false,false,false)
+                drawingView!!.setSizeForBrush(1.6f)
+                brushDialog!!.dismiss()
             }
 
-            override fun onStopTrackingTouch(p0: SeekBar?) {
-                drawingView?.setSizeForBrush(p0!!.progress.toFloat())
+            dash.setOnClickListener {
+                drawingView!!.selectedBrushEffect(true, false, false, false, false, false,false,false,false,false)
+                brushDialog!!.dismiss()
             }
+            circle.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, false, true, false, false, false,false,false,false,false)
+                brushDialog!!.dismiss()
+            }
+            rectngale.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, false, false, true, false, false, false,false,false,false)
+                brushDialog!!.dismiss()
+            }
+            line.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, false, false, false, false, true, false,false,false,false)
+                brushDialog!!.dismiss()
+            }
+            roundRect.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, false, false, false, false, true,true,false,false,false)
+                brushDialog!!.dismiss()
+            }
+            oval.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, false, false, false, false, true,false,true,false,false)
+                brushDialog!!.dismiss()
+            }
+            textDraw.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, false, false, false, false, true,false,false,true,false)
+                brushDialog!!.dismiss()
+            }
+            fillCircle.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, false, true, false, false, false,false,false,false,true)
+                brushDialog!!.dismiss()
+            }
+            fillRect.setOnClickListener {
+                drawingView!!.selectedBrushEffect(false, false, false, true, false, false,false,false,false,true)
+                brushDialog!!.dismiss()
+            }
+            seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+                override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                    progressCount.setText(p1.toString())
+                }
 
-        })
-        dialog.show()
+                override fun onStartTrackingTouch(p0: SeekBar?) {
+
+                }
+
+                override fun onStopTrackingTouch(p0: SeekBar?) {
+                    drawingView?.setSizeForBrush(p0!!.progress.toFloat())
+                }
+
+            })
+            brushDialog!!.show()
+        }
     }
 
     private fun showColorsDialog(){
