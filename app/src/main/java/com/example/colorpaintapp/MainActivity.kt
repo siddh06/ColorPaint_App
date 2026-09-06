@@ -13,30 +13,38 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.opengl.Visibility
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.view.animation.AnimationUtils
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.GridView
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.widget.AppCompatButton
 import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.get
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.example.colorpaintapp.Adapter.ColorBoxAdapter
 import com.example.colorpaintapp.Util.PreferenceUtil
@@ -54,13 +62,13 @@ import java.io.FileOutputStream
 class MainActivity : AppCompatActivity() {
 
     private var drawingView : DrawingView? = null
-    private var selectBrush : ImageButton? = null
-    private var selectColor : ImageButton? = null
-    private var selectImage : ImageButton? = null
+    private var selectBrush : LinearLayout? = null
+    private var selectColor : LinearLayout? = null
+    private var selectImage : LinearLayout? = null
     private var currentColorPaint : ImageButton? = null
     private var undoDraw : ImageView? = null
-    private var saveFile : ImageButton? = null
-    private var share : ImageButton? = null
+    private var saveFile : LinearLayout? = null
+    private var share : ImageView? = null
     private var redoBtn : ImageView? = null
     private var currentSaveFile : String = ""
     private var currentColor : String = ""
@@ -81,15 +89,17 @@ class MainActivity : AppCompatActivity() {
             imageBackground.setImageURI(result.data?.data)
         }
     }
-    val requestPermission : ActivityResultLauncher<Array<String>>? = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
+    val requestPermission : ActivityResultLauncher<Array<String>> = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
         permissions ->
         permissions.entries.forEach {
             val permissionName = it.key
             val isGranted = it.value
             if(isGranted){
-                Toast.makeText(this,"Permission Granted", Toast.LENGTH_SHORT).show()
-                val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                openGallaryLauncher.launch(intent)
+                if(permissionName == Manifest.permission.READ_EXTERNAL_STORAGE){
+                    Toast.makeText(this,"Permission Granted", Toast.LENGTH_SHORT).show()
+                    /*val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                    openGallaryLauncher.launch(intent)*/
+                }
             }else{
                 if(permissionName == Manifest.permission.READ_EXTERNAL_STORAGE){
                     Toast.makeText(this,"Permission denied", Toast.LENGTH_SHORT).show()
@@ -116,45 +126,11 @@ class MainActivity : AppCompatActivity() {
         val intent : Intent = getIntent()
         if(intent.hasExtra("imagePath")) {
             val value = intent.getStringExtra("imagePath")
+            value?.also { currentSaveFile = it }
             val bitmap: Bitmap = BitmapFactory.decodeFile(value)
 
             val imageBackground: ImageView = findViewById(R.id.backgrounImg)
             imageBackground.setImageBitmap(bitmap)
-        }
-
-        selectBrush?.setOnClickListener {
-            showBrushDialog()
-        }
-        selectColor?.setOnClickListener {
-            //startActivity(Intent(this@MainActivity, ColorPicker::class.java))
-            colorPickerDialog()
-        }
-        selectImage?.setOnClickListener {
-            requestStoragePermission()
-        }
-
-        undoDraw?.setOnClickListener {
-            drawingView?.onClickUndo()
-        }
-        redoBtn?.setOnClickListener {
-            drawingView?.onClickRedo()
-        }
-        share?.setOnClickListener {
-            if(!currentSaveFile.equals("")){
-                shareFile(currentSaveFile)
-            }else{
-                Toast.makeText(this, "Save The Painted File", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        saveFile?.setOnClickListener {
-            if(isReadStoragePermissionAllow()){
-                lifecycleScope.launch {
-                    val frameLayoutView : FrameLayout = findViewById(R.id.frameView)
-                    val myBitmbap : Bitmap = getBitmapFromView(frameLayoutView)
-                    currentSaveFile = saveBitmapFile(myBitmbap)
-                }
-            }
         }
 
         backBtn.setOnClickListener(View.OnClickListener {
@@ -176,6 +152,71 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+
+        try{
+            selectBrush?.setOnClickListener {
+                showBrushDialog()
+            }
+            selectColor?.setOnClickListener {
+                //startActivity(Intent(this@MainActivity, ColorPicker::class.java))
+                colorPickerDialog()
+            }
+            selectImage?.setOnClickListener {
+                requestStoragePermission()
+            }
+
+            undoDraw?.setOnClickListener {
+                drawingView?.onClickUndo()
+            }
+            redoBtn?.setOnClickListener {
+                drawingView?.onClickRedo()
+            }
+            share?.setOnClickListener {
+                if(!currentSaveFile.equals("")){
+                    shareFile(currentSaveFile)
+                }else{
+                    Toast.makeText(this, "Save The Painted File", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            saveFile?.setOnClickListener {
+                if(isReadStoragePermissionAllow()){
+
+                    val savePaintDialog = Dialog(this)
+                    savePaintDialog.window!!.requestFeature(Window.FEATURE_NO_TITLE)
+                    savePaintDialog.setContentView(R.layout.save_image_popup)
+                    savePaintDialog.window!!.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                    savePaintDialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                    savePaintDialog.window!!.setGravity(Gravity.CENTER)
+                    savePaintDialog.show()
+
+                    val savePiantBtn : AppCompatButton = savePaintDialog.findViewById(R.id.savePaintBtn)
+                    val paintName : EditText = savePaintDialog.findViewById(R.id.paintName)
+
+                    savePiantBtn.setOnClickListener(View.OnClickListener {
+                        val nameOfPaint = paintName.text.toString()
+                        if(nameOfPaint.contentEquals("")){
+                            Toast.makeText(this, "Enter Name", Toast.LENGTH_SHORT).show()
+                        }else{
+                            lifecycleScope.launch {
+                                val frameLayoutView: FrameLayout = findViewById(R.id.frameView)
+                                val myBitmbap: Bitmap = getBitmapFromView(frameLayoutView)
+                                currentSaveFile = saveBitmapFile(myBitmbap, nameOfPaint)
+                                savePaintDialog.dismiss()
+                            }
+                        }
+                    })
+                }else{
+                    Toast.makeText(this,"Storage Permission Required", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }catch (e : Exception){
+            Log.e("MainActivity", "onStart: "+ e.message )
+        }
+    }
+
     private fun isReadStoragePermissionAllow(): Boolean{
         val result = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
         return result == PackageManager.PERMISSION_GRANTED
@@ -185,8 +226,10 @@ class MainActivity : AppCompatActivity() {
         if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)){
             showRationalDialog("ColorPain App", "Access Storage Permission")
         }else{
-            requestPermission?.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.INTERNET,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE))
+            /*requestPermission.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.INTERNET,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE))*/
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            openGallaryLauncher.launch(intent)
         }
     }
 
@@ -196,30 +239,38 @@ class MainActivity : AppCompatActivity() {
         }else{
             brushDialog = Dialog(this)
             brushDialog!!.window?.requestFeature(Window.FEATURE_NO_TITLE)
-            brushDialog!!.setContentView(R.layout.brush_sample)
-            brushDialog!!.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
+            brushDialog!!.setContentView(R.layout.brush_dialog)
+            brushDialog!!.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             brushDialog!!.window?.setLayout(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            brushDialog!!.window?.setGravity(Gravity.BOTTOM)
+            brushDialog!!.window?.setGravity(Gravity.CLIP_VERTICAL)
             brushDialog!!.setTitle("Brush Size")
-            val pencil : ImageView = brushDialog!!.findViewById(R.id.pencil)
-            val pen : ImageView = brushDialog!!.findViewById(R.id.pen)
-            val dash : ImageView = brushDialog!!.findViewById(R.id.dash)
-            val circle : ImageView = brushDialog!!.findViewById(R.id.circle)
-            val rectngale : ImageView = brushDialog!!.findViewById(R.id.rectangle)
+            brushDialog!!.window?.setDimAmount(0.5F)
+            val pencil : LinearLayout = brushDialog!!.findViewById(R.id.pencil)
+            val pen : LinearLayout = brushDialog!!.findViewById(R.id.pen)
+            val dash : LinearLayout = brushDialog!!.findViewById(R.id.dash)
+            val circle : LinearLayout = brushDialog!!.findViewById(R.id.circle)
+            val rectngale : LinearLayout = brushDialog!!.findViewById(R.id.rectangle)
 
-            val neonInner : ImageView = brushDialog!!.findViewById(R.id.neonInner)
-            val neonOuter : ImageView = brushDialog!!.findViewById(R.id.neonOuter)
-            val neonSolid : ImageView = brushDialog!!.findViewById(R.id.neonSolid)
-            val airBrush : ImageView = brushDialog!!.findViewById(R.id.airBrush)
-            val line : ImageView = brushDialog!!.findViewById(R.id.line)
-            val roundRect : ImageView = brushDialog!!.findViewById(R.id.roundRectangle)
-            val oval : ImageView = brushDialog!!.findViewById(R.id.ovalBrush)
-            val textDraw : ImageView = brushDialog!!.findViewById(R.id.textDraw)
-            val fillCircle : ImageView = brushDialog!!.findViewById(R.id.fillCircle)
-            val fillRect : ImageView = brushDialog!!.findViewById(R.id.fillRectangle)
+            val neonInner : LinearLayout = brushDialog!!.findViewById(R.id.neonInner)
+            val neonOuter : LinearLayout = brushDialog!!.findViewById(R.id.neonOuter)
+            val neonSolid : LinearLayout = brushDialog!!.findViewById(R.id.neonSolid)
+            val airBrush : LinearLayout = brushDialog!!.findViewById(R.id.airBrush)
+            val line : LinearLayout = brushDialog!!.findViewById(R.id.line)
+            val roundRect : LinearLayout = brushDialog!!.findViewById(R.id.roundRectangle)
+            val oval : LinearLayout = brushDialog!!.findViewById(R.id.ovalBrush)
+            val textDraw : LinearLayout = brushDialog!!.findViewById(R.id.textDraw)
+            val fillCircle : LinearLayout = brushDialog!!.findViewById(R.id.fillCircle)
+            val fillRect : LinearLayout = brushDialog!!.findViewById(R.id.fillRectangle)
+            val brushBtn : TextView = brushDialog!!.findViewById(R.id.brushBtn)
+            val styleBtn : TextView = brushDialog!!.findViewById(R.id.styleBtn)
+            val brushScroll : ScrollView = brushDialog!!.findViewById(R.id.brushScroll)
+            val styleLl : LinearLayout = brushDialog!!.findViewById(R.id.styleLl)
+            val radiusSize : EditText = brushDialog!!.findViewById(R.id.radiusSize)
+            val radiusX : EditText = brushDialog!!.findViewById(R.id.radiusX)
+            val radiusY : EditText = brushDialog!!.findViewById(R.id.radiusY)
 
             val seekBar : SeekBar = brushDialog!!.findViewById(R.id.seekBar)
             val progressCount : TextView = brushDialog!!.findViewById(R.id.progressCountTxt)
@@ -316,6 +367,70 @@ class MainActivity : AppCompatActivity() {
                 }
 
             })
+
+            brushBtn.setOnClickListener(View.OnClickListener {
+                val animation = AnimationUtils.loadAnimation(applicationContext, R.anim.fade_animation)
+                brushScroll.startAnimation(animation)
+                styleLl.visibility = View.GONE
+                brushScroll.visibility = View.VISIBLE
+
+            })
+
+            styleBtn.setOnClickListener(View.OnClickListener {
+                val animation = AnimationUtils.loadAnimation(applicationContext, R.anim.fade_animation)
+                styleLl.startAnimation(animation)
+                brushScroll.visibility = View.GONE
+                styleLl.visibility = View.VISIBLE
+            })
+
+            radiusSize.doAfterTextChanged {
+                var r = 0F;
+                var x = 0F;
+                var y = 0F;
+                if(it!!.isNotEmpty()){
+                    r = it.toString().toFloat()
+                }
+                if(radiusX.text.isNotEmpty()){
+                    x = radiusX.text.toString().toFloat()
+                }
+                if(radiusY.text.isNotEmpty()){
+                    y = radiusY.text.toString().toFloat()
+                }
+                drawingView!!.setShadowEffect(r,x,y)
+            }
+
+            radiusX.doAfterTextChanged {
+                var r = 0F;
+                var x = 0F;
+                var y = 0F;
+                if(it!!.isNotEmpty()){
+                    x = it.toString().toFloat()
+                }
+                if(radiusSize.text.isNotEmpty()){
+                    r = radiusSize.text.toString().toFloat()
+                }
+                if(radiusY.text.isNotEmpty()){
+                    y = radiusY.text.toString().toFloat()
+                }
+                drawingView!!.setShadowEffect(r,x,y)
+            }
+
+            radiusY.doAfterTextChanged {
+                var r = 0F;
+                var x = 0F;
+                var y = 0F;
+                if(it!!.isNotEmpty()){
+                    y = it.toString().toFloat()
+                }
+                if(radiusX.text.isNotEmpty()){
+                    x = radiusX.text.toString().toFloat()
+                }
+                if(radiusSize.text.isNotEmpty()){
+                    r = radiusSize.text.toString().toFloat()
+                }
+                drawingView!!.setShadowEffect(r,x,y)
+            }
+
             brushDialog!!.show()
         }
     }
@@ -357,7 +472,9 @@ class MainActivity : AppCompatActivity() {
 
         builder.setTitle(title)
             .setMessage(message)
-            .setPositiveButton("ok"){Dialog, _ -> Dialog.dismiss()}
+            .setNegativeButton("cancel"){Dialog, _ -> Dialog.dismiss()}
+            .setPositiveButton("ok"){Dialog, it ->   requestPermission.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.INTERNET,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE))}
         builder.create().show()
     }
 
@@ -374,7 +491,7 @@ class MainActivity : AppCompatActivity() {
         return returnBitmapValue
     }
 
-    private suspend fun saveBitmapFile(mBitmap : Bitmap?): String{
+    private suspend fun saveBitmapFile(mBitmap : Bitmap?, name : String): String{
         var result = ""
         withContext(Dispatchers.IO){
             try {
@@ -385,7 +502,7 @@ class MainActivity : AppCompatActivity() {
                     if(!directory.exists()){
                         directory.mkdir()
                     }
-                    val file = File(directory,"${System.currentTimeMillis()}.png")
+                    val file = File(directory,"$name.png")
                     var fOut : FileOutputStream? = null
                     fOut = FileOutputStream(file)
 
@@ -397,7 +514,7 @@ class MainActivity : AppCompatActivity() {
 
                     runOnUiThread {
                         if(result.isNotEmpty()){
-                            Log.e("ImageLocation", "saveBitmapFile: "+ result)
+                            PreferenceUtil.getInstance(this@MainActivity).setBoolean("NewFileAdd", true)
                             Toast.makeText(applicationContext, "Image Store Successfully", Toast.LENGTH_SHORT).show()
                         }else{
                             Toast.makeText(applicationContext, "Image Save Failed", Toast.LENGTH_SHORT).show()
@@ -418,7 +535,7 @@ class MainActivity : AppCompatActivity() {
             shareIntent.putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(applicationContext, "com.example.colorpaintapp.fileprovider", myFile))
             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            shareIntent.putExtra(Intent.EXTRA_TEXT, "your title");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "ColorPaint App");
             shareIntent.setType("image/*")
             startActivity(Intent.createChooser(shareIntent, "share"))
         }catch (ex : Exception){
@@ -436,13 +553,13 @@ class MainActivity : AppCompatActivity() {
             colorPickerDialog!!.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             colorPickerDialog!!.window?.setLayout(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
+            colorPickerDialog!!.window?.setDimAmount(0.5F)
 
             val colorPicker = colorPickerDialog!!.findViewById<KavehColorPicker>(R.id.colorPickerView)
             val hueSlider = colorPickerDialog!!.findViewById<KavehHueSlider>(R.id.hueSlider)
-            val colorAlphaSlider =
-                colorPickerDialog!!.findViewById<KavehColorAlphaSlider>(R.id.colorAlphaSlider)
+            val colorAlphaSlider = colorPickerDialog!!.findViewById<KavehColorAlphaSlider>(R.id.colorAlphaSlider)
             val txtColor = colorPickerDialog!!.findViewById<TextView>(R.id.txtColor)
             val bgColor = colorPickerDialog!!.findViewById<CardView>(R.id.bgColor)
             val closeBtn = colorPickerDialog!!.findViewById<TextView>(R.id.closeBtn)
@@ -492,6 +609,7 @@ class MainActivity : AppCompatActivity() {
                 Log.e("MainActivity", "colorPickerDialog: " + e.message)
             }
 
+            colorPickerDialog!!.setCancelable(false)
             colorPickerDialog!!.show()
         }
     }

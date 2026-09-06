@@ -36,7 +36,7 @@ internal class ColorBoxAdapter(
         card.setCardBackgroundColor(colorList.get(position))
 
         card.setOnClickListener {
-            Toast.makeText(context, "clicked"+ colorList.get(position), Toast.LENGTH_SHORT).show()
+            //Toast.makeText(context, "clicked"+ colorList.get(position), Toast.LENGTH_SHORT).show()
             val hexColor = Integer.toHexString(colorList.get(position))
             val myColor = "#"+hexColor
             PreferenceUtil.getInstance(context).setString("latestColor", myColor)

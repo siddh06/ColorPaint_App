@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="250dp"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardBackgroundColor="#504E4E"
+    app:cardCornerRadius="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/addTo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Add To"
+            android:textAlignment="center"
+            android:textSize="16sp"
+            android:padding="2dp"
+            android:textColor="@color/white"
+            android:fontFamily="@font/crimsontext_semibold"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.8dp"
+            android:background="@color/gray"/>
+
+        <TextView
+            android:id="@+id/share"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Share"
+            android:textAlignment="center"
+            android:textSize="16sp"
+            android:padding="2dp"
+            android:textColor="@color/white"
+            android:fontFamily="@font/crimsontext_semibold"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.8dp"
+            android:background="@color/gray"/>
+
+        <TextView
+            android:id="@+id/edit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Edit"
+            android:textAlignment="center"
+            android:textSize="16sp"
+            android:padding="2dp"
+            android:textColor="@color/white"
+            android:fontFamily="@font/crimsontext_semibold"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.8dp"
+            android:background="@color/gray"/>
+
+        <TextView
+            android:id="@+id/delete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Delete"
+            android:textAlignment="center"
+            android:textSize="16sp"
+            android:padding="2dp"
+            android:textColor="@color/white"
+            android:fontFamily="@font/crimsontext_semibold"/>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

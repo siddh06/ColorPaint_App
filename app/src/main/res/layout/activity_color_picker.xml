@@ -8,22 +8,19 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:layout_marginTop="60dp"
-        android:layout_marginBottom="60dp"
-        android:background="@drawable/dialog_baground"
+        android:background="@drawable/brush_box_bg"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5">
+        app:layout_constraintVertical_bias="0.5"
+        android:layout_margin="10dp">
 
         <RelativeLayout
             android:id="@+id/relativeLayout"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="50dp"
             android:background="@drawable/dialog_header"
             android:gravity="center_vertical"
             app:layout_constraintEnd_toEndOf="parent"
@@ -34,12 +31,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_alignParentLeft="true"
-                android:layout_marginLeft="15dp"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="15dp"
                 android:gravity="center_vertical"
-                android:text="Color"
+                android:text="Color Picker"
                 android:textColor="@color/white"
-                android:textSize="20sp" />
+                android:textSize="20sp"
+                android:fontFamily="@font/crimsontext_semibold"/>
 
             <!--<ImageView
                 android:id="@+id/closeBtn"
@@ -53,11 +51,11 @@
             <RelativeLayout
                 android:layout_width="60dp"
                 android:layout_height="30dp"
-                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
                 android:layout_marginTop="15dp"
                 android:gravity="center"
                 android:background="@drawable/bg_border"
-                android:layout_marginRight="15dp">
+                android:layout_marginEnd="15dp">
 
                 <TextView
                     android:id="@+id/closeBtn"
@@ -67,7 +65,8 @@
                     android:textColor="@color/black"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    android:gravity="center_vertical"/>
+                    android:gravity="center_vertical"
+                    android:fontFamily="@font/crimsontext_semibold"/>
             </RelativeLayout>
 
 
@@ -120,35 +119,43 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/colorAlphaSlider">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="HEX"
+                android:textAlignment="center"
+                android:textSize="18sp"
+                android:fontFamily="@font/crimsontext_semibold"/>
+
+            <LinearLayout
+                android:layout_width="160dp"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:layout_marginRight="10dp"
-                android:layout_weight="1"
+                android:layout_marginStart="15dp"
                 android:background="@drawable/round_corner"
-                android:gravity="center_vertical">
+                android:gravity="center"
+                android:padding="5dp">
 
                 <TextView
                     android:id="@+id/txtColor"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="#ff56ff"
+                    android:text="#ffffff"
                     android:textAlignment="center"
-                    android:textColor="@color/black"
                     android:textSize="20sp"
-                    android:textStyle="italic" />
-            </LinearLayout>
+                    android:fontFamily="@font/crimsontext_semibold"/>
 
-            <androidx.cardview.widget.CardView
-                android:id="@+id/bgColor"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginLeft="10dp"
-                android:layout_weight="5"
-                app:cardBackgroundColor="@color/skyblue"
-                app:cardCornerRadius="5dp" />
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/bgColor"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_marginStart="15dp"
+                    app:cardBackgroundColor="@color/skyblue"
+                    app:cardCornerRadius="5dp"
+                    android:layout_gravity="center"/>
+            </LinearLayout>
 
         </LinearLayout>
 
@@ -174,7 +181,8 @@
                     android:text="Default Color"
                     android:textColor="@color/black"
                     android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:fontFamily="@font/crimsontext_semibold"/>
 
                 <ImageView
                     android:layout_width="40dp"
@@ -197,14 +205,13 @@
         <GridView
             android:id="@+id/colorBoxGrid"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="100dp"
+            android:layout_marginLeft="15dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginRight="15dp"
             android:horizontalSpacing="6dp"
             android:numColumns="6"
             android:verticalSpacing="15dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginLeft="15dp"
-            android:layout_marginRight="15dp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"

@@ -2,23 +2,22 @@ package com.example.colorpaintapp
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.BitmapShader
 import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
+import android.graphics.DiscretePathEffect
 import android.graphics.EmbossMaskFilter
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.RectF
 import android.graphics.Shader
-import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
 import android.util.Log
-import android.util.TypedValue
 import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import kotlin.random.Random
 
@@ -35,6 +34,7 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
     private var canvas : Canvas? = null
     private var p1: Point2D? = null
     private var p2: Point2D? = null
+    private var shadow: ShadowPoints? = null
     private var mPathList = ArrayList<CustomPath>()
     private val mUndoList = ArrayList<CustomPath>()
     private var blurMaskFilter : BlurMaskFilter? = null
@@ -50,6 +50,13 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
     private var isDrawTextEffect = false
     private var fillColorEffect = false
     private var neonType = ""
+    private var matrix : Matrix? = null
+    private val inverseMatrix = Matrix()
+    private var matrixValues: FloatArray? = null
+    private lateinit var scaleGestureDetector : ScaleGestureDetector
+    private var scaleFactor = 1.0f
+    private var lastFocusX = 0f
+    private var lastFocusY = 0f
     private var random = Random
     private val SPRAY_DENSITY = 20
     private val SPRAY_RADIUS = 60
@@ -65,8 +72,8 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
 
     private fun setUpDrawing() {
         mDrawPaint = Paint()
-        mDrawPath = CustomPath(color, mBrushSize, isDashPathEffect, isBlurPathEffect, isCirclePathEffect, isRectanglePathEffect, isAirBrushPathEffect, isLinePathEffect, isRoundRectangleEffect, isOvalPathEffect, isDrawTextEffect, fillColorEffect, p1, p2, null)
-        mDrawPath2 = CustomPath(color, mBrushSize, isDashPathEffect, isBlurPathEffect, isCirclePathEffect, isRectanglePathEffect, isAirBrushPathEffect, isLinePathEffect, isRoundRectangleEffect, isOvalPathEffect, isDrawTextEffect, fillColorEffect, p1, p2, null)
+        mDrawPath = CustomPath(color, mBrushSize, isDashPathEffect, isBlurPathEffect, isCirclePathEffect, isRectanglePathEffect, isAirBrushPathEffect, isLinePathEffect, isRoundRectangleEffect, isOvalPathEffect, isDrawTextEffect, fillColorEffect, shadow, p1, p2, null)
+        mDrawPath2 = CustomPath(color, mBrushSize, isDashPathEffect, isBlurPathEffect, isCirclePathEffect, isRectanglePathEffect, isAirBrushPathEffect, isLinePathEffect, isRoundRectangleEffect, isOvalPathEffect, isDrawTextEffect, fillColorEffect, shadow, p1, p2, null)
         mDrawPaint!!.color = color
         mDrawPaint!!.style = Paint.Style.STROKE
         mDrawPaint!!.strokeJoin = Paint.Join.ROUND
@@ -75,8 +82,52 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
         mDrawPaint!!.isAntiAlias = true
         mCanvasPaint = Paint(Paint.DITHER_FLAG)
         listOfPoints = ArrayList()
-        mDrawPaint!!.setShadowLayer(10f, 5f, 5f, Color.GRAY);
+        mDrawPaint!!.setShadowLayer(0f, 0f, 0f, Color.GRAY);
         mDrawPaint!!.isDither = true
+        shadow = ShadowPoints(0f,0f,0f)
+
+        matrix = Matrix()
+        matrixValues = floatArrayOf(9F)
+
+        /*scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener(){
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                *//*scaleFactor *= detector.getScaleFactor();
+                scaleFactor = Math.max(0.1f, Math.min(scaleFactor, 10.0f));
+                matrix!!.setScale(scaleFactor, scaleFactor);
+                invalidate();*//*
+
+                val scaleFactorDelta = detector.scaleFactor
+                val focusX = detector.focusX
+                val focusY = detector.focusY
+
+                // Compute the focus shift due to scale
+
+                // Compute the focus shift due to scale
+                val dx: Float = focusX - lastFocusX
+                val dy: Float = focusY - lastFocusY
+
+                // Adjust the matrix for scaling
+
+                // Adjust the matrix for scaling
+                matrix!!.postScale(scaleFactorDelta, scaleFactorDelta, focusX, focusY)
+
+                // Translate the canvas to keep the focus point at the same position
+
+                // Translate the canvas to keep the focus point at the same position
+                matrix!!.postTranslate(dx * (1 - scaleFactor), dy * (1 - scaleFactor))
+
+                // Update the scale factor and focus positions
+
+                // Update the scale factor and focus positions
+                scaleFactor *= scaleFactorDelta
+                lastFocusX = focusX
+                lastFocusY = focusY
+
+                invalidate()
+                return true
+            }
+        })*/
+
         //textureBitmap = BitmapFactory.decodeResource(resources, R.drawable.pen)
         //shader = BitmapShader(textureBitmap!!, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
         //mDrawPaint!!.shader = shader
@@ -85,12 +136,16 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
     internal inner class CustomPath(var color : Int, var brushThikNess : Float, var isDashPath : Boolean, var isBlurPath : Boolean,
                                     val isCirclePath : Boolean, val isRectanglePath : Boolean, val isAirBrushPath : Boolean,
                                     val isLinePath : Boolean,val isRoundRectanglePath : Boolean,val isOvalPath : Boolean,
-                                    val isDrawTextPath : Boolean,val fillColor : Boolean, var p1 : Point2D?, var p2 : Point2D?, val pointList : List<Point2D>?,
+                                    val isDrawTextPath : Boolean,val fillColor : Boolean , var shadow : ShadowPoints?, var p1 : Point2D?, var p2 : Point2D?, val pointList : List<Point2D>?,
                                     var neonType : String = "") : Path(){
 
     }
 
     internal inner class Point2D(var x : Float, var y : Float){
+
+    }
+
+    internal inner class ShadowPoints(var r : Float, var x : Float, var y : Float){
 
     }
 
@@ -103,6 +158,10 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawBitmap(mCanvasBitmap!!,0f,0f, mCanvasPaint)
+
+        /*canvas.save()
+        canvas.setMatrix(matrix)
+        canvas.scale(scaleFactor, scaleFactor);*/
 
         /*for(path in mPathList){
             mDrawPaint!!.strokeWidth = path.brushThikNess
@@ -130,16 +189,18 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
                 canvas.drawCircle(path.p1!!.x, path.p1!!.y, path.p2!!.x/2, mDrawPaint!!)
             }else if(path.isRectanglePath){
                 canvas.drawRect(path.p1!!.x, path.p1!!.y, path.p2!!.x, path.p2!!.y, mDrawPaint!!)
-            }*//*else if(path.isAirBrushPath && path.pointList!!.isNotEmpty()){
+            }else if(path.isAirBrushPath && path.pointList!!.isNotEmpty()){
                 val list = path.pointList
                 for (i in 0 until list.size) {
                     val pp2 = list.get(i)
                     sprayPaint(pp2.x, pp2.y)
                 }
-            }*//*else{
+            }else{
                 canvas.drawPath(path, mDrawPaint!!)
             }
         }*/
+
+
 
         mDrawPaint!!.strokeWidth = mBrushSize
         mDrawPaint!!.color = color
@@ -148,8 +209,12 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
         }else{
             mDrawPaint!!.style = Paint.Style.STROKE
         }
-        if(isDashPathEffect){
-            mDrawPaint!!.setPathEffect(DashPathEffect(floatArrayOf(10f + mBrushSize, 50f + mBrushSize), 0f))
+        if(isDashPathEffect || isDrawTextEffect){
+            if(isDashPathEffect){
+                mDrawPaint!!.setPathEffect(DashPathEffect(floatArrayOf(10f + mBrushSize, 50f + mBrushSize), 0f))
+            }else{
+                mDrawPaint!!.setPathEffect(DiscretePathEffect(40f, 30f))
+            }
         }else{
             mDrawPaint!!.setPathEffect(null)
         }
@@ -178,17 +243,27 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
         }else if(isOvalPathEffect && p1 != null && p2 != null){
             var rectF = RectF(p1!!.x, p1!!.y, p2!!.x, p2!!.y)
             canvas.drawOval(rectF, mDrawPaint!!)
-        }else if(isDrawTextEffect && p1 != null && p2 != null){
-            canvas.drawText("Siddhesh", p2!!.x, p2!!.y, mDrawPaint!!)
         }else if(isLinePathEffect && p1 != null && p2 != null){
             canvas.drawLine(p1!!.x,p1!!.y,p2!!.x,p2!!.y,mDrawPaint!!)
         }else{
             canvas.drawPath(mDrawPath!!,mDrawPaint!!)
         }
 
+        /*if(isDrawTextEffect && p1 != null && p2 != null){
+            canvas.drawText("Siddhesh", p2!!.x, p2!!.y, mDrawPaint!!)
+        }*/
+        //canvas.restore()
+        //this.canvas = canvas
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
+        //scaleGestureDetector.onTouchEvent(event!!)
+        //var result = scaleGestureDetector.onTouchEvent(event);
+        //Log.e("ZoomableView", "onTouchEvent: " + event.getAction() + ", scaleDetectorResult: " + result);
+
+        /*val touchPoint = floatArrayOf(event.x, event.y)
+        matrix!!.invert(inverseMatrix)
+        inverseMatrix.mapPoints(touchPoint)*/
         val touchX = event?.x
         val touchY = event?.y
 
@@ -247,6 +322,7 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
                         isOvalPathEffect,
                         isDrawTextEffect,
                         fillColorEffect,
+                        shadow,
                         p1,
                         p2,
                         drawList
@@ -259,6 +335,7 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
                     mDrawPath!!.color = color
                     mDrawPath!!.isDashPath = isDashPathEffect
                     mDrawPath!!.isBlurPath = isBlur
+                    mDrawPath!!.shadow = shadow
                     if(isBlurPathEffect){
                         if(MainActivity.neonSolidCheck){
                             neonType = "SOLID"
@@ -272,7 +349,7 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
                     }
                     mDrawPath!!.neonType = neonType
                     mPathList.add(mDrawPath!!)
-                    mDrawPath = CustomPath(color, mBrushSize, isDashPathEffect, isBlur, isCirclePathEffect, isRectanglePathEffect, isAirBrushPathEffect, isLinePathEffect, isRoundRectangleEffect, isOvalPathEffect, isDrawTextEffect, fillColorEffect, p1, p2, null, neonType)
+                    mDrawPath = CustomPath(color, mBrushSize, isDashPathEffect, isBlur, isCirclePathEffect, isRectanglePathEffect, isAirBrushPathEffect, isLinePathEffect, isRoundRectangleEffect, isOvalPathEffect, isDrawTextEffect, fillColorEffect, shadow, p1, p2, null, neonType)
                 }
 
                 setDrawing()
@@ -298,6 +375,14 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
     fun setColor(newColor : String){
         color = Color.parseColor(newColor)
         mDrawPaint!!.color = color
+    }
+
+    fun setShadowEffect(radius : Float, X : Float, Y : Float){
+        Log.e("OnChange", "radiusSize: "+ radius)
+        Log.e("OnChange", "X : "+ X )
+        Log.e("OnChange", "Y : "+  Y )
+        mDrawPaint!!.setShadowLayer(radius, X, Y, Color.GRAY)
+        shadow = ShadowPoints(radius, X, Y)
     }
 
     fun onClickUndo(){
@@ -358,10 +443,19 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
             }else{
                 mDrawPaint!!.style = Paint.Style.STROKE
             }
-            if(path.isDashPath){
-                mDrawPaint!!.setPathEffect(DashPathEffect(floatArrayOf(10f + path.brushThikNess, 50f + path.brushThikNess), 0f))
+            if(path.isDashPath || path.isDrawTextPath){
+                if(path.isDashPath){
+                    mDrawPaint!!.setPathEffect(DashPathEffect(floatArrayOf(10f + path.brushThikNess, 50f + path.brushThikNess), 0f))
+                }else{
+                    mDrawPaint!!.setPathEffect(DiscretePathEffect(30f, 30f))
+                }
             }else{
                 mDrawPaint!!.setPathEffect(null)
+            }
+            if(path.shadow != null) {
+                mDrawPaint!!.setShadowLayer(path.shadow!!.r, path.shadow!!.x, path.shadow!!.y, Color.GRAY)
+            }else{
+                mDrawPaint!!.setShadowLayer(0f, 0f,0f, Color.GRAY)
             }
             if(path.isBlurPath){
                 if(path.neonType.contentEquals("SOLID")){
@@ -387,8 +481,6 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
             }else if(path.isOvalPath && path.p1 != null && path.p2 != null){
                 val rectF = RectF(path.p1!!.x, path.p1!!.y, path.p2!!.x, path.p2!!.y)
                 canvas!!.drawOval(rectF, mDrawPaint!!)
-            }else if(path.isDrawTextPath && path.p1 != null && path.p2 != null){
-                canvas!!.drawText("Siddhesh", path.p2!!.x, path.p2!!.y, mDrawPaint!!)
             }else if(path.isLinePath){
                 canvas!!.drawLine(path.p1!!.x, path.p1!!.y, path.p2!!.x, path.p2!!.y,mDrawPaint!!)
             }else if(path.isAirBrushPath && path.pointList!!.isNotEmpty()){
@@ -400,7 +492,12 @@ class DrawingView(context : Context, attrs : AttributeSet) : View(context, attrs
             }else{
                 canvas!!.drawPath(path, mDrawPaint!!)
             }
+
+           /* if(path.isDrawTextPath && path.p1 != null && path.p2 != null){
+                canvas!!.drawText("Siddhesh", path.p2!!.x, path.p2!!.y, mDrawPaint!!)
+            }*/
         }
+        //canvas!!.restore()
     }
 
     private fun spray(x: Float, y: Float) {

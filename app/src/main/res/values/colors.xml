@@ -10,4 +10,6 @@
     <color name="yellow">#ffff00</color>
     <color name="skyblue">#35a79c</color>
     <color name="random">#A339b1</color>
+    <color name="primary">#FF5151</color>
+    <color name="gray">#808080</color>
 </resources>

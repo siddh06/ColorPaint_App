@@ -1,5 +1,6 @@
 package com.example.colorpaintapp.Adapter
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -13,7 +14,7 @@ import androidx.cardview.widget.CardView
 import com.example.colorpaintapp.MainActivity
 import com.example.colorpaintapp.R
 
-class HomeAdapter(private var imageList: List<String>,
+class HomeAdapter(private var imageList: ArrayList<String>,
 private var context: Context) : BaseAdapter(){
 
     override fun getCount(): Int {
@@ -28,6 +29,7 @@ private var context: Context) : BaseAdapter(){
       return p0.toLong()
     }
 
+    @SuppressLint("ViewHolder")
     override fun getView(p0: Int, p1: View?, p2: ViewGroup?): View {
       val view = LayoutInflater.from(context).inflate(R.layout.image_sample, p2, false)
 
@@ -45,5 +47,11 @@ private var context: Context) : BaseAdapter(){
         })
 
         return view
+    }
+
+    fun dataChangeListenr(list :ArrayList<String>){
+        imageList.clear()
+        imageList = list
+        notifyDataSetChanged()
     }
 }

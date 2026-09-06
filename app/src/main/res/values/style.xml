@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="PopupMenuOverlapAnchor">
+        <item name="android:overlapAnchor">true</item>
+        <item name="android:popupBackground">@android:color/black</item>
+        <item name="android:dropDownVerticalOffset">-50dp</item>
+        <item name="android:dropDownHorizontalOffset">200dp</item>
+    </style>
+</resources>

@@ -27,4 +27,13 @@ class PreferenceUtil private constructor(context : Context){
         return mySharedPreferences.getString(key, "")
     }
 
+    fun setBoolean(key: String, value: Boolean){
+        editor.putBoolean(key, value)
+        editor.apply()
+    }
+
+    fun getBoolean(key: String): Boolean {
+        return mySharedPreferences.getBoolean(key, false)
+    }
+
 }
