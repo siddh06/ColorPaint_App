@@ -10,7 +10,11 @@ import android.view.animation.AnimationUtils
 import android.widget.GridView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.GONE
@@ -35,8 +39,22 @@ class HomePageActivity : AppCompatActivity() {
     private var likedListShow = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home_page)
+
+        val homeLayout = findViewById<View>(R.id.homeLayout)
+        ViewCompat.setOnApplyWindowInsetsListener(homeLayout) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                finish()
+            }
+        })
 
         val gridLayout : GridView = findViewById(R.id.gridLayout)
         val rvLayout : RecyclerView = findViewById(R.id.rvLayout)
@@ -175,9 +193,5 @@ class HomePageActivity : AppCompatActivity() {
                 customAdapter?.notifyDataSetChanged()
             }
         }
-    }
-
-    override fun onBackPressed() {
-        finish()
     }
 }

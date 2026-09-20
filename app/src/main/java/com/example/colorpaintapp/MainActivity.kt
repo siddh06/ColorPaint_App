@@ -36,14 +36,19 @@ import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.AppCompatButton
 import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.get
+import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.example.colorpaintapp.Adapter.ColorBoxAdapter
@@ -82,35 +87,38 @@ class MainActivity : AppCompatActivity() {
         var neonNormalCheck = false
     }
 
-    var openGallaryLauncher : ActivityResultLauncher<Intent> = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
-        result ->
-        if(result.resultCode == RESULT_OK && result.data!= null){
-            val imageBackground : ImageView = findViewById(R.id.backgrounImg)
-            imageBackground.setImageURI(result.data?.data)
-        }
-    }
-    val requestPermission : ActivityResultLauncher<Array<String>> = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
-        permissions ->
-        permissions.entries.forEach {
-            val permissionName = it.key
-            val isGranted = it.value
-            if(isGranted){
-                if(permissionName == Manifest.permission.READ_EXTERNAL_STORAGE){
-                    Toast.makeText(this,"Permission Granted", Toast.LENGTH_SHORT).show()
-                    /*val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                    openGallaryLauncher.launch(intent)*/
-                }
-            }else{
-                if(permissionName == Manifest.permission.READ_EXTERNAL_STORAGE){
-                    Toast.makeText(this,"Permission denied", Toast.LENGTH_SHORT).show()
-                }
+    private val pickMediaLauncher: ActivityResultLauncher<PickVisualMediaRequest> =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                val imageBackground: ImageView = findViewById(R.id.backgrounImg)
+                imageBackground.setImageURI(uri)
             }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val mainLayout = findViewById<View>(R.id.mainLayout)
+        val relativeLayout3 = findViewById<View>(R.id.relativeLayout3)
+        val llButtons = findViewById<View>(R.id.ll_Buttons)
+
+        ViewCompat.setOnApplyWindowInsetsListener(mainLayout) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            relativeLayout3.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = systemBars.top
+                leftMargin = systemBars.left
+                rightMargin = systemBars.right
+            }
+            llButtons.setPadding(
+                systemBars.left,
+                llButtons.paddingTop,
+                systemBars.right,
+                systemBars.bottom
+            )
+            insets
+        }
 
         drawingView = findViewById(R.id.drawing_view)
         selectBrush = findViewById(R.id.selectBrush)
@@ -182,55 +190,38 @@ class MainActivity : AppCompatActivity() {
             }
 
             saveFile?.setOnClickListener {
-                if(isReadStoragePermissionAllow()){
+                val savePaintDialog = Dialog(this)
+                savePaintDialog.window!!.requestFeature(Window.FEATURE_NO_TITLE)
+                savePaintDialog.setContentView(R.layout.save_image_popup)
+                savePaintDialog.window!!.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                savePaintDialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                savePaintDialog.window!!.setGravity(Gravity.CENTER)
+                savePaintDialog.show()
 
-                    val savePaintDialog = Dialog(this)
-                    savePaintDialog.window!!.requestFeature(Window.FEATURE_NO_TITLE)
-                    savePaintDialog.setContentView(R.layout.save_image_popup)
-                    savePaintDialog.window!!.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-                    savePaintDialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-                    savePaintDialog.window!!.setGravity(Gravity.CENTER)
-                    savePaintDialog.show()
+                val savePiantBtn : AppCompatButton = savePaintDialog.findViewById(R.id.savePaintBtn)
+                val paintName : EditText = savePaintDialog.findViewById(R.id.paintName)
 
-                    val savePiantBtn : AppCompatButton = savePaintDialog.findViewById(R.id.savePaintBtn)
-                    val paintName : EditText = savePaintDialog.findViewById(R.id.paintName)
-
-                    savePiantBtn.setOnClickListener(View.OnClickListener {
-                        val nameOfPaint = paintName.text.toString()
-                        if(nameOfPaint.contentEquals("")){
-                            Toast.makeText(this, "Enter Name", Toast.LENGTH_SHORT).show()
-                        }else{
-                            lifecycleScope.launch {
-                                val frameLayoutView: FrameLayout = findViewById(R.id.frameView)
-                                val myBitmbap: Bitmap = getBitmapFromView(frameLayoutView)
-                                currentSaveFile = saveBitmapFile(myBitmbap, nameOfPaint)
-                                savePaintDialog.dismiss()
-                            }
+                savePiantBtn.setOnClickListener(View.OnClickListener {
+                    val nameOfPaint = paintName.text.toString()
+                    if(nameOfPaint.contentEquals("")){
+                        Toast.makeText(this, "Enter Name", Toast.LENGTH_SHORT).show()
+                    }else{
+                        lifecycleScope.launch {
+                            val frameLayoutView: FrameLayout = findViewById(R.id.frameView)
+                            val myBitmbap: Bitmap = getBitmapFromView(frameLayoutView)
+                            currentSaveFile = saveBitmapFile(myBitmbap, nameOfPaint)
+                            savePaintDialog.dismiss()
                         }
-                    })
-                }else{
-                    Toast.makeText(this,"Storage Permission Required", Toast.LENGTH_SHORT).show()
-                }
+                    }
+                })
             }
         }catch (e : Exception){
             Log.e("MainActivity", "onStart: "+ e.message )
         }
     }
 
-    private fun isReadStoragePermissionAllow(): Boolean{
-        val result = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-        return result == PackageManager.PERMISSION_GRANTED
-    }
-
     private fun requestStoragePermission() {
-        if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)){
-            showRationalDialog("ColorPain App", "Access Storage Permission")
-        }else{
-            /*requestPermission.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.INTERNET,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE))*/
-            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            openGallaryLauncher.launch(intent)
-        }
+        pickMediaLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
     private fun showBrushDialog(){
@@ -467,7 +458,7 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "color selected", Toast.LENGTH_LONG).show()
     }
 
-    private fun showRationalDialog(title : String , message : String){
+    /*private fun showRationalDialog(title : String , message : String){
         val builder : AlertDialog.Builder = AlertDialog.Builder(this)
 
         builder.setTitle(title)
@@ -476,7 +467,7 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("ok"){Dialog, it ->   requestPermission.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.INTERNET,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE))}
         builder.create().show()
-    }
+    }*/
 
     private fun getBitmapFromView(view: View): Bitmap{
         val returnBitmapValue = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
